@@ -1,0 +1,53 @@
+#ImageBox img {
+	margin: 1%;
+	width: 98%;
+}
+
+#Constrained {
+	max-height: 100em;
+	width: auto;
+}
+
+#Margined {
+	margin: 10px;
+}
+
+#VerticalCentering {
+	padding-top: 20%;
+}
+
+#Bolded {
+  font-size: 200px;
+}
+
+.hidden{
+  display: none;
+}
+#Constrained{
+	width: 100%;
+}
+
+#Expanded{
+	width: 750px;
+	max-width: 100%;
+}
+
+#Margined {
+	margin: 10px;
+}
+
+#VerticalCentering {
+	padding-top: 20%;
+}
+
+#Bolded {
+	font-size: 200px;
+}
+
+#OddResults {
+	background-color: rgb(160, 255, 235);
+}
+
+#EvenResults {
+	background-color: rgb(250, 200, 250);
+}

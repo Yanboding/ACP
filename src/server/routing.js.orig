@@ -1,0 +1,614 @@
+
+const fs = require('fs');
+
+var correctAnswer = 1;
+
+
+const S3FS = require('s3fs');
+const crypto = require("crypto");// Use crypto for generating pID or uID
+const s3fsImpl = new S3FS('ACPimages',{
+    accessKeyId:'AKIAJHQYUJWVBZ5MUPRA',
+    secretAccessKey:'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'
+});
+s3fsImpl.create();
+
+const session = require('express-session');
+const bcrypt = require('bcryptjs');
+const sqlite3 = require('sqlite3').verbose();
+var db = new sqlite3.Database('db.sqlite');
+db.serialize();
+
+const testFunctions = require('./testFunctions');
+const addCommentFunctions = require('./addCommentFuncs');
+const registerFunctions = require('./registerFunctions');
+const signinFunctions = require('./signinFuncs');
+const createProductFunction = require('./createProductFunctions');
+const getCommentFuncs = require('./getCommentFuncs');
+const getProfileFuncs = require('./getProfileFuncs');
+const updateInfoFuncs = require('./updateInfoFuncs');
+const getProductFuncs = require('./getProductFuncs');
+const hisTreeFuncs = require('./hisTreeFuncs');
+
+function validateEmail(email) {
+    var re = /[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,4}/igm;
+    return re.test(email);
+}
+
+<<<<<<< HEAD
+function signIn(req,res,next){
+	var reqUsername = req.body.username;
+	var reqPassword = req.body.password;
+    console.log("Inside Sign in function");
+
+	if (isAdmin == 0) {
+	//  sign in as  administrator
+		db.all('SELECT * FROM Administrator WHERE aID = ?',[reqUsername],function(err,rows){
+			if(err) {
+				throw err;
+			}
+			if(!rows || rows.length > 1) {
+				throw "error on getting rows" ;
+			}
+
+			// Used hash to check password
+			//bcrypt.compareSync(reqPassword, rows[0].password)
+			if(rows.length === 1 && rows[0].password == reqPassword) {
+				req.session.uID = rows[0].uID;
+				req.session.username = rows[0].username;
+				res.send(rows[0]);
+			} else {
+				res.send('Success');
+			}
+		});
+
+	}
+
+  	if (reqUsername==""||reqPassword=="") {
+    	res.send({
+      		"correct": false,
+      		"msg": "Please type both your username and password!"
+    	});
+  	} else {  //  sign in as normal client
+		db.all('SELECT uID, username, password,name FROM User WHERE username = ?',[reqUsername], function(err, rows) {
+			if(err) {
+				throw err;
+			}
+			if(!rows || rows.length > 1) {
+				throw "error on getting rows; Multiple users exisit which is unlikely" ;
+			}
+			// Used hash to check password
+			if(rows.length === 1 && bcrypt.compareSync(reqPassword, rows[0].password)) {
+				req.session.uID = rows[0].uID;
+				req.session.username = rows[0].username;
+				console.log('Successfully signed in');
+      			res.send({
+        			"correct": true,
+        			"msg": "Success"
+      			});// For POSTMAN testing purpose; Will modify this to redirect after front end page is ready
+			} else {
+				res.send({
+        			"correct": false,
+        			"msg": "Your username and password do not match, Please try again!"
+      			});
+			}
+		});
+	}
+}
+
+
+
+
+function registerFunc(req,res,next) {
+    if(req.body == null || req.body.username == null || req.body.password == null
+        || req.body.name == null || req.body.status == 'None'){
+        console.log('required info entered'); // will be modified for error page;
+        return;
+    }
+    console.log(req.body);
+	var uID = crypto.randomBytes(16).toString("hex");
+    var status = req.body.status;
+	var username = req.body.username;
+	var password = req.body.password;
+    var name = req.body.name;
+	var question = req.body.question;
+	var answer = req.body.answer;
+	if(!validateEmail(username)){
+		res.send({
+			"correct": false,
+			"message": 'email format is incorrect'
+		});
+		return;
+	}
+	// add new user to the database
+    db.all('SELECT * FROM User WHERE username = ?', [username], function (err, rows) {
+        if (rows.length > 0) {
+            console.log('user already exists');
+            res.send({
+              "correct": false,
+            	"message": 'user already exists'
+            });
+            return;
+        }
+        var hash_password = bcrypt.hashSync(password, 10);
+        console.log(hash_password);
+
+        db.run('INSERT INTO User(uID, username, name, password, status,question,answer) VALUES(?, ?, ?, ?, ?,?,?)',
+            [uID, username, name,  hash_password, status,question,answer], function (err) {
+                console.log(err);
+        });
+		req.session.username = username;
+		res.send({
+      "correct": true,
+      "message": 'Success'
+    });
+    });
+}
+
+
+
+function createProduct(req,res,next){
+	var pID = crypto.randomBytes(16).toString("hex");
+	console.log(req.body);
+	var name = req.body.name;
+  var parent = req.body.parent; // need to add at create product page
+	var date = req.body.date;
+    var admin  =  req.body.admin;
+
+    var path = req.body.path;
+   // console.log(p);
+    //Create a file stream
+	/*
+    var stream = fs.createReadStream(file.path);
+
+    //writeFile calls putObject behind the scenes
+    s3fsImpl.writeFile(file.name, stream).then(function () {
+        fs.unlink(file.path, function (err) {
+            if (err) {
+                console.error(err);
+            }
+        });
+    });
+    var filePath = 'https://s3.amazonaws.com/ACPimages/'+file.name;
+    */
+	db.all('SELECT aID FROM Administrator WHERE aID = ?',[admin],function(err,rows) {
+		if (rows.length == 0) {
+			console.log('user does not exist');
+			res.send('Failed: admin does not exist');
+		}else{
+      db.all('SELECT root FROM Product WHERE pID=?',[parent], function(err,rows){
+        if(err || rows.length == 0){
+          console.log("Unexpected Error!");
+          res.send("Unexpected Error! Our Engineering will fix it!");
+        }else{
+          db.run('INSERT INTO Product(pID, name, root, parent, dateIssued, imageURL,admin) VALUES (?,?,?,?,?,?,?);',
+      			[pID,name, rows[0], parent, date, path, admin], function (err) {
+      				console.log(err);
+      				console.log("Error on database, Please make sure try a different name for this product");
+      			});
+        }
+      })}
+
+		console.log('Successfully added');
+		res.redirect('/');
+	});
+}
+
+function getCommentFunc(req,res,next){
+	var result = [];
+    if(req.params.username != null){
+        // find all the commetns from one user by username
+        var id = req.params.username;
+		db.all('SELECT username  FROM Comment WHERE username=?',[id],function(err,rows) {
+			if(err) {
+				throw err;
+			}
+			if (rows.length == 0 ) {
+				res.send('This user has never commented on any products');
+                return;
+			}
+
+			rows.map(function(row) {
+				let comment = {
+					pID: row.id,
+					username: row.username,
+					commentIssued: row.commentIssued,
+					content: row.content,
+					type: row.type
+				};
+				result.add(comment);
+
+			});
+
+			res.json(result);
+		});
+    }else{
+		// find all the commetns that are given to one product by pID
+        var pID = req.params.pID;
+		db.all('SELECT pID FROM Comment WHERE pID=?',[pID],function(err,rows) {
+			if(err) {
+				throw err;
+			}
+			if (rows.length == 0 ) {
+				res.send('This product does not any comments');
+			}
+
+			rows.map(function(row) {
+				let comment = {
+					pID: row.id,
+					uID: row.username,
+					commentIssued: row.commentIssued,
+					content: row.content,
+					type: row.type
+				};
+				result.add(comment);
+
+			});
+
+			res.json(result);
+		});
+    }
+
+}
+=======
+>>>>>>> master
+
+function pageNotFound(req, res, next) {
+	let error_object = {
+		err: 'Bad request: no such API'
+	};
+	res.send(error_object)
+}
+
+
+function addCommitFunc(req,res,next){
+	// Normal users are able to add new version of a product
+	// Product can only be created by admin;
+	var aID = req.body.id;
+	var root = req.body.root;
+	var name = req.body.name;
+	var parent = req.body.parent;
+	var pID = req.body.pID;
+	var dateIssued = req.body.date;
+	var file = '';
+
+	db.all('SELECT aID FROM Administrator WHERE aID = ?',[aID],function(err,rows) {
+		if (rows.length == 0) {
+			console.log('user does not exist');
+			res.send('Failed: user does not exist');
+            return;
+		}
+
+		db.run('INSERT INTO Product(pID, root, parent, dateIssued, imagePath,admin) VALUES (?,?,?,?,?);',
+			[pID,root, parent, dateIssued, file, aID], function (err) {
+				console.log(err)
+			});
+		res.send('Success'); // send string for now but will modify this if decides to re-render to another page
+	});
+
+}
+
+
+function hisTreeFunc(req,res,next){
+	var name = req.params.name;
+  var note = {
+    error: true,
+    massage: null,
+    isroot: false,
+    nodes: null
+  }
+	if(name!=null) {
+		db.all("SELECT root, imageURL FROM Product WHERE name=?", [name], function (err, rows) {
+			if(err){
+        console.log(err);
+				note.massage = "Unexpected";
+				res.send(note);
+        return;
+			}
+			if(rows.length < 1){
+				console.log("Such product does not exist");
+        note.massage = "Such product does not exist";
+				res.send(note);
+                return;
+			}
+      if(rows[0].root == "Start"){
+        note.error = false;
+        note.massage = "Success, This is root";
+        note.isroot = true;
+        note.nodes = rows[0];
+        res.send(note);
+        return;
+      }
+      db.all("SELECT parent, imageURL FROM Product WHERE root=? and parent<>?",[rows[0],name],function(err,rows){
+        if(err||rows.length==0){
+          console.log("Unexpected Error!");
+          note.error = true;
+          note.massage = "Unexpected"
+          res.send(note);
+        }else{
+          note.error = false;
+          note.massage = "Success, This is not root";
+          note.nodes = rows;
+          res.send(note);
+        }
+      }) // response as a list of products that have the same name,root and admin
+		});
+	}
+}
+
+
+function deleteProduct(req,res,next){
+	var pID = req.params.pID;
+	var admin = req.params.admin;
+	if(pID!=null && admin!=null ) {
+		db.all("SELECT * FROM Product WHERE pID=? AND admin=?", [pID,admin], function (err, rows) {
+			if (err) {
+				console.log(err);
+				res.send(err);
+			}
+			if (rows.length != 1) {
+				console.log("Either your admin is incorect or your pID is incorrect");
+				res.send("Either your admin is incorect or your pID is incorrect");
+				return;
+			}
+			db.run('DELETE FROM Product WHERE pID=? AND name=? AND dateIssued=?', [pID, rows[0].name, rows[0].dateIssued], function (err, rows) {
+				if (err) {
+					console.log(err);
+					res.send(err);
+					return;
+				}
+				if (rows.length < 1) {
+					console.log("This shouldn't happen");
+					console.log("Such comments does not exist");
+
+					return;
+				}
+				res.send('Success');
+			});
+		});
+	}else if(admin == null){
+		res.send("adminID is missing");
+	}
+	else{
+		res.send("pID is missing, You are probably entering an URL with a wrong pID");
+	}
+}
+
+function deleteComment(req,res,next){
+	var pID = req.params.pID;
+	var uID = req.params.uID;
+	if(pID!=null && uID!=null ) {
+		db.all("SELECT * FROM Product WHERE pID=? AND admin=?", [pID, uID], function (err, rows) {
+			if (err) {
+				console.log(err);
+				res.send(err);
+			}
+			if (rows.length != 1) {
+				console.log("Either your admin is incorect or your pID is incorrect");
+				res.send("Either your admin is incorect or your pID is incorrect");
+				return;
+			}
+			db.run('DELETE FROM Comment WHERE pID=? and uID=? and commentIssued=?', [pID, uID, rows[0].commentIssued], function (err, rows) {
+				if (err) {
+					console.log(err);
+					res.send(err);
+					return;
+				}
+				if (rows.length < 1) {
+					console.log("This shouldn't happen");
+					console.log("Such comments does not exist");
+
+					return;
+				}
+				res.send('Success');
+			});
+		});
+	}
+	else{
+		res.send("pID is missing, You are probably entering an URL with a wrong pID");
+	}
+}
+
+function checkQuestionPassword(req, res, next) {
+	var username = req.body.username;
+	var question = req.body.question;
+	var answer = req.body.answer;
+  	console.log(req.body);
+	if (username != "") {
+		db.all("SELECT question, answer FROM User WHERE username=?", [username], function(err, rows) {
+			if (err) {
+				console.log(err);
+				res.send(err);
+			}
+			if (rows.length == 0) {
+      			res.send({
+              "correct": false,
+              "msg":"Sorry, this user does not exits. Please try again!"});
+      			return;
+			} else {
+				// check question and answer
+				if (rows[0].question == question && rows[0].answer == answer) {
+					correctAnswer = 2;
+					res.send({
+            "correct": true,
+            "msg":"Question and answer matches"});
+					return;
+				} else {
+					res.send({
+            "correct": false,
+            "msg":"Sorry, the question and answer do not match with the database"});
+					return;
+				}
+			}
+		});
+	} else {
+		res.send({
+      "correct": false,
+      "msg":"Please enter your user name"});
+		return;
+	}
+}
+
+function resetPassword(req, res, next) {
+	var username = req.body.username;
+	var password1 = req.body.password1;
+	var password2 = req.body.password2;
+  console.log(req.body);
+	if (correctAnswer == 2) {
+		if (password1 != null && password1 == password2) {
+			db.all("UPDATE User SET password=? WHERE username=?", [bcrypt.hashSync(password1, 10), username], function(err){
+    			if(err){
+    				console.log(err);
+    				res.send(err);
+    			}
+    			else{
+    				correctAnswer = 1;
+    				res.send({"correct":true,
+                "msg":"Password reset!"});
+    			}
+    		});
+		} else {
+			res.send({"correct":false,
+          "msg":"Sorry, please enter the same password twice"});
+			return;
+		}
+	} else {
+		res.send("Please check your question and answer");
+	}
+}
+
+
+function checkUserName(req,res,next) {
+    if (req.body == null || req.body.username == null) {
+        console.log('required info entered'); // will be modified for error page;
+        return;
+    }
+    var username = req.body.username;
+    if(!validateEmail(username)){
+		res.send({
+			"correct": false,
+			"exist":true,
+			"message": 'Username should be a valid email address!'
+		});
+		return;
+	}
+    console.log(req.body);
+	// add new user to the database
+    db.all('SELECT * FROM User WHERE username = ?', [username], function (err, rows) {
+        if (rows.length > 0) {
+            console.log('User already exists');
+        //    res.json(msg);
+            res.send({
+            	"correct": false,
+              	"exist": true,
+            	"message": 'Username already exists!'
+            });
+            return;
+        } else {
+        	console.log('User name available ');
+			res.send({
+      			"correct": false,
+      			"exist": true,
+      			"message": 'Username is available :)'
+    		});
+    		return;
+        }
+    });
+	// Supposed to redirect to profile page, but use send response for testing purpos
+}
+function projectInit(req,res,next){
+	"use strict";
+
+}
+
+<<<<<<< HEAD
+function isAdmin(username) {
+
+    if (!(username.indexOf('@') > -1)) {
+		return true;
+	} else {
+		return false;	
+=======
+function isAdmin(req, res, next) {
+	var username = req.body.username;
+    if(!(username.indexOf('@') > -1)){
+		res.send({
+			"adminCorrect": false,
+			"exist":true,
+			"message": 'not an admin'
+		});
+		return;
+	}else{
+		res.send({
+			"adminCorrect": true,
+			"exist":true,
+			"message": 'is an admin'
+		});
+		return;
+>>>>>>> master
+	}
+}
+
+function setup(app) {
+
+	var testFunc = testFunctions.testFunc;
+	var testPrintWithCallback = testFunctions.testPrintWithCallback;
+
+	app.all('/test_print_with_callback', testPrintWithCallback);
+
+	app.get('/test_api', testFunc);
+
+
+	// Deliverable 3
+	app.post('/checkUserName', checkUserName);
+	app.post('/register', registerFunctions.registerFunc);// done
+	app.post('/test_upload',createProductFunction.uploadImageFunc); //done
+	app.get('/profile', getProfileFuncs.getProfile); //done
+	// can search by uID, username and status
+
+	app.get('/comment/:uID',getCommentFuncs.getCommentFunc); //done
+	app.get('/comment/:pID',getCommentFuncs.getCommentFunc); //done
+	// can search comment by uID or pID
+
+	app.get('/product/:id',getProductFuncs.getProductFunc); //done
+	// This URL is able to replace the functionality of histree;
+
+	app.get('/histree',hisTreeFuncs.hisTreeFunc); // done
+
+	app.post('/add_comment',addCommentFunctions.addCommentFunc); // done
+	app.post('/product', createProductFunction.createProduct); //done
+	app.post('/add_commit',addCommitFunc); //done
+    app.post('/login',signinFunctions.signIn); // partially done
+
+    app.put('/update',updateInfoFuncs.updateInfo); // done
+    app.post('/checkanswer', checkQuestionPassword);
+    app.post('/resetpassword', resetPassword); // done
+	app.delete('/comment/:uid/:pid', deleteComment);
+	app.delete('/product/:pid/:admin', deleteProduct);
+
+    app.post('/project_init',projectInit);
+
+	// Problem to solve: Do we have another URL for admin?
+	// Another sign in page as well? Will address this issue in next online meeting
+
+
+
+
+	// Supposed to sync with front-end, Will address this unsolved problem at next meeting
+
+	app.get('/main', testFunc);
+    // Supposed to sync with front-end, Will address this unsolved problem at next meeting
+
+
+	app.all('*', pageNotFound);
+	// Deliverable 4
+
+
+	// app.get('/product/ancestors', testFunc)
+	// app.get('/product/siblings', testFunc)
+	// app.get('/product/descendants', testFunc)
+
+}
+
+module.exports = {
+	setup: setup
+};

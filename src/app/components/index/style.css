@@ -1,0 +1,50 @@
+
+.Title {
+	background-color: red;
+	font-size: 5em;
+}
+
+#SlideShow {
+	background-color: blue;
+	padding: 0.15em;
+	height: 25em;
+}
+
+#SlideShowImage {
+	max-height:500px;
+	max-width:900px;
+	height:100%;
+	width:100%;
+	background-size:cover;
+}
+
+#SlideShowDescription {
+	float: left;
+	display: inline;
+	text-indent: 1em;
+	margin-top: -22.5em;
+	margin-left: 5px;
+	width: 35em;
+}
+
+#SlideShowController {
+	position: relative;
+	display: flex;
+	border-style: dashed;
+	margin-top: -2.5em;
+	margin-left: 85%;
+	margin-right: 20px;
+	height: 1em;
+	width: auto;
+	font-size: 20px;
+}
+
+#Content {
+	background-color: pink;
+	height: auto;
+}
+
+#MaxThumbSize {
+	height: 300px;
+	width: 600px;
+}

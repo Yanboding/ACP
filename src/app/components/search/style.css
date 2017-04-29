@@ -1,0 +1,28 @@
+#Constrained{
+	width: 100%;
+}
+
+#Expanded{
+	width: 750px;
+	max-width: 100%;
+}
+
+#Margined {
+	margin: 10px;
+}
+
+#VerticalCentering {
+	padding-top: 20%;
+}
+
+#Bolded {
+    font-size: 200px;
+}
+
+#OddResults {
+    background-color: rgb(160, 255, 235);
+}
+
+#EvenResults {
+    background-color: rgb(250, 200, 250);
+}

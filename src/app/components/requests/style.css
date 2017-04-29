@@ -1,0 +1,13 @@
+#Constrained {
+	width: 100%;
+}
+
+#Bolded {
+  font-size: 200px;
+}
+
+#Thumbnail {
+  width: 150px;
+  height: 100px;
+  align-items: left;
+}

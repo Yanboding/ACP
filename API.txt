@@ -1,0 +1,170 @@
+GET '/api/product:pID':
+{
+     “pID”:””
+      “Parent”: ""
+      “dateIssued”: ""
+      "imageURL":"",
+      "administrator": """
+
+
+}
+
+
+
+GET '/api/profile?username=username':
+{
+    “ uID”:””,
+    “userName”:””,
+    “Password”:””,
+    “status”:””
+}
+
+
+GET '/profile?uID=uID':
+
+{
+ “Products”:
+     [
+       {
+        “pID”:””
+  		“Parent”: “”
+        “dateIssued”: “”
+        }
+     ]
+}
+
+
+GET '/product':
+
+{
+    “pID”:””
+  	“Parent”: ""
+    “dateIssued”: ""
+    "imageURL":"",
+    "administrator": """
+}
+
+
+
+GET '/product:pID/histree':
+{
+  "histree”:
+    [
+        {
+          “pID”:””,
+  		  “Parent”: “”,
+          “dateIssued”: “”,
+          "imageURL":"",
+          "administrator": """
+         }
+    ]
+}
+
+
+GET '/product:pID/ancestors':
+{
+ “descendants”:
+     [
+       {
+        “pID”:"",
+  		“Parent”: "",
+        “dateIssued”: "",
+        "imageURL":"",
+        "administrator": """
+        }
+     ]
+}
+
+GET '/product:pID/siblings' :
+{
+
+ “siblings”:
+     [
+
+        {
+        “pID”:"",
+  		“Parent”: "",
+        “dateIssued”: "",
+         "imageURL":"",
+         "administrator": """
+        }
+     ]
+}
+
+
+GET /product/descendants':
+{
+    “descendants”:
+     [
+
+        {
+            “pID”:””,
+  		    “Parent”: “”,
+            “dateIssued”: “”,
+            "imageURL":""
+            "administrator": """
+        }
+     ]
+}
+
+
+
+GET ''/histree:pID':
+{
+ “histree”:
+     [
+        {
+           “pID”:””,
+  		   “Parent”: “”,
+           “dateIssued”: “”,
+           "imageURL":""
+           "administrator": """
+        }
+     ]
+}
+
+
+POST /register
+Request body contains
+
+{
+        “uID”:””,
+        “userName”:””,
+        “Password”:””,
+        “status”:””
+}
+
+
+POST /product
+Request body contains
+
+{
+       “pID”:"",
+       “Parent”: "",
+       “dateIssued”:"",
+       "imageURL":""
+       "administrator": ""
+
+}
+
+PUT /user:uID
+Request body contains
+
+{
+        “uID”:"",
+        “userName”:"",
+        “Password”:"",
+        “status”:""
+}
+
+
+
+DELETE /product?pID=pID
+
+Response is "Success" or "Error: no such product"
+
+
+
+DELETE /comment?pID=pID?uID=uID
+
+Response is "Success" or "Error: no such comment"

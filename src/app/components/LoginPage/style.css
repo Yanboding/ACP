@@ -1,0 +1,16 @@
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.FormControl {
+    display: block;
+    color: white;
+    margin: 0 0 4px;
+    width: 200px;
+}
+
+form {
+	position: relative;
+}
